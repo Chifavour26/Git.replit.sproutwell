@@ -1,15 +1,22 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: KidWell Children's Health App API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profiles
+    description: Child profiles
+  - name: logs
+    description: Health activity logs
+  - name: goals
+    description: Daily goals
+  - name: achievements
+    description: Badges and achievements
 paths:
   /healthz:
     get:
@@ -24,6 +31,137 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /profiles:
+    get:
+      operationId: getProfiles
+      tags: [profiles]
+      summary: Get all child profiles
+      responses:
+        "200":
+          description: List of profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Profile"
+    post:
+      operationId: createProfile
+      tags: [profiles]
+      summary: Create a child profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProfileRequest"
+      responses:
+        "201":
+          description: Profile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+  /profiles/{id}:
+    get:
+      operationId: getProfile
+      tags: [profiles]
+      summary: Get a child profile by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "404":
+          description: Not found
+  /profiles/{id}/dashboard:
+    get:
+      operationId: getDashboard
+      tags: [profiles]
+      summary: Get today's dashboard data for a profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /logs:
+    post:
+      operationId: createLog
+      tags: [logs]
+      summary: Log a health activity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLogRequest"
+      responses:
+        "201":
+          description: Log created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityLog"
+    get:
+      operationId: getLogs
+      tags: [logs]
+      summary: Get activity logs for a profile
+      parameters:
+        - name: profileId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityLog"
+  /achievements/{profileId}:
+    get:
+      operationId: getAchievements
+      tags: [achievements]
+      summary: Get achievements for a profile
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of achievements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Achievement"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +171,174 @@ components:
           type: string
       required:
         - status
-
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        age:
+          type: integer
+        avatarColor:
+          type: string
+        petName:
+          type: string
+        petLevel:
+          type: integer
+        petMood:
+          type: string
+          enum: [happy, neutral, sad]
+        streakDays:
+          type: integer
+        totalPoints:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - age
+        - avatarColor
+        - petName
+        - petLevel
+        - petMood
+        - streakDays
+        - totalPoints
+        - createdAt
+    CreateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+        avatarColor:
+          type: string
+        petName:
+          type: string
+      required:
+        - name
+        - age
+        - avatarColor
+        - petName
+    Dashboard:
+      type: object
+      properties:
+        profileId:
+          type: string
+        date:
+          type: string
+        fruitsVeggies:
+          type: integer
+        activityMinutes:
+          type: integer
+        sleepHours:
+          type: number
+        screenTimeHours:
+          type: number
+        waterGlasses:
+          type: integer
+        goals:
+          $ref: "#/components/schemas/Goals"
+        score:
+          type: integer
+      required:
+        - profileId
+        - date
+        - fruitsVeggies
+        - activityMinutes
+        - sleepHours
+        - screenTimeHours
+        - waterGlasses
+        - goals
+        - score
+    Goals:
+      type: object
+      properties:
+        fruitsVeggies:
+          type: integer
+        activityMinutes:
+          type: integer
+        sleepHours:
+          type: number
+        screenTimeHours:
+          type: number
+        waterGlasses:
+          type: integer
+      required:
+        - fruitsVeggies
+        - activityMinutes
+        - sleepHours
+        - screenTimeHours
+        - waterGlasses
+    CreateLogRequest:
+      type: object
+      properties:
+        profileId:
+          type: string
+        type:
+          type: string
+          enum: [nutrition, activity, sleep, screen_time, water]
+        value:
+          type: number
+        notes:
+          type: string
+        date:
+          type: string
+      required:
+        - profileId
+        - type
+        - value
+    ActivityLog:
+      type: object
+      properties:
+        id:
+          type: string
+        profileId:
+          type: string
+        type:
+          type: string
+        value:
+          type: number
+        notes:
+          type: string
+        date:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - profileId
+        - type
+        - value
+        - date
+        - createdAt
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: string
+        profileId:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        earnedAt:
+          type: string
+        points:
+          type: integer
+      required:
+        - id
+        - profileId
+        - type
+        - title
+        - description
+        - icon
+        - earnedAt
+        - points
